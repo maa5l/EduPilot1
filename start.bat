@@ -37,7 +37,7 @@ echo.
 
 REM ----- 2) Install backend dependencies -----
 echo [2/4] Installing backend dependencies (~1 min on first run)...
-cd backend
+cd api
 %PYCMD% -m pip install --quiet --disable-pip-version-check -r requirements.txt
 set INSTALL_ERR=%errorlevel%
 cd ..
@@ -64,8 +64,8 @@ echo ============================================================
 echo.
 
 start "" cmd /c "timeout /t 4 /nobreak >nul & start http://127.0.0.1:8000/"
-cd backend
-%PYCMD% app.py
+cd api
+%PYCMD% main.py
 cd ..
 
 echo.
