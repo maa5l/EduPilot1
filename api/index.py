@@ -46,6 +46,7 @@ USERS = {
 }
 
 @app.get("/api/dashboard")
+@app.get("/dashboard")
 def get_dashboard(request: Request) -> dict[str, Any]:
     auth_header = request.headers.get("Authorization")
     token = None
@@ -91,6 +92,7 @@ class ChatRequest(BaseModel):
     message: str
 
 @app.post("/api/chat")
+@app.post("/chat")
 async def chat(body: ChatRequest, request: Request):
     msg = body.message.lower()
     auth_header = request.headers.get("Authorization")
@@ -118,6 +120,7 @@ class LoginRequest(BaseModel):
     password: str
 
 @app.post("/api/login")
+@app.post("/login")
 def login(body: LoginRequest) -> dict[str, Any]:
     student_id = body.student_id.strip()
     if student_id not in USERS:
