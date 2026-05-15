@@ -33,7 +33,7 @@ function BridgePage() {
       </div>
 
       <div className="space-y-10">
-        {bridges.length > 0 ? bridges.map((group, idx) => (
+        {bridges.length > 0 ? bridges.map((group: any, idx: number) => (
           <section key={idx} className="rounded-[2rem] border border-border bg-card p-8 shadow-sm">
             <header className="mb-8 flex items-center justify-between">
                <div className="flex items-center gap-4">

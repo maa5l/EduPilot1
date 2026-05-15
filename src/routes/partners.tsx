@@ -61,7 +61,7 @@ function PartnersPage() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {PARTNERS.map((p) => (
+        {PARTNERS.map((p: any) => (
           <article key={p.code} className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition hover:shadow-xl hover:-translate-y-1">
             <div className="flex items-center gap-4 border-b border-border bg-slate-50/50 px-6 py-5">
                <div className="ms-auto text-right">

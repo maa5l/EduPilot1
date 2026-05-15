@@ -39,7 +39,7 @@ function Dashboard() {
     { code: "MATH204", name: "الرياضيات المتقطعة", weight: 60 },
     { code: "ENG250", name: "اللغة الإنجليزية", weight: 35 },
   ];
-  const totalLoad = Math.round(courses.reduce((a, c) => a + (c.weight || 0), 0) / courses.length);
+  const totalLoad = Math.round(courses.reduce((a: number, c: any) => a + (c.weight || 0), 0) / courses.length);
   const gpa = student.gpa.toFixed(2);
   const alerts = data.alerts || [];
 
@@ -82,7 +82,7 @@ function Dashboard() {
           </div>
 
           <div className="space-y-3">
-            {courses.map((c) => (
+            {courses.map((c: any) => (
               <div key={c.code} className="flex items-center gap-3">
                 <div className="flex w-32 items-center gap-2">
                   <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-bold text-[color:var(--navy)]">{c.code}</span>
@@ -114,7 +114,7 @@ function Dashboard() {
             لكل مادة في بلاك بورد، نختار لك أفضل المصادر من يوتيوب لتختار الأنسب لأسلوبك في التعلم.
           </p>
           <div className="mt-4 grid grid-cols-3 gap-2">
-            {courses.slice(0, 3).map((c) => (
+            {courses.slice(0, 3).map((c: any) => (
               <div key={c.code} className="rounded-lg bg-secondary p-2 text-center">
                 <div className="text-[10px] text-muted-foreground">{c.code}</div>
                 <div className="mt-1 text-[10px] font-bold text-[color:var(--royal)]">5 مصادر</div>
@@ -142,7 +142,7 @@ function Dashboard() {
 
           <div className="space-y-3">
             {alerts.length > 0 ? (
-              alerts.map((a, i) => (
+              alerts.map((a: any, i: number) => (
                 <div key={i} className="flex items-start gap-3 rounded-xl border border-border p-3">
                   <div className={`mt-1.5 flex h-2.5 w-2.5 shrink-0 rounded-full bg-[color:var(--destructive)]`} />
                   <div className="flex-1">

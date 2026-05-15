@@ -70,7 +70,7 @@ function TrackPage() {
       </section>
 
       <div className="grid gap-5 lg:grid-cols-3">
-        {TRACKS.map((t) => (
+        {TRACKS.map((t: any) => (
           <article key={t.name} className="flex flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-[var(--shadow-card)]">
             <div className="relative p-5 text-white" style={{ background: t.color as string }}>
               {t.badge && (
@@ -95,7 +95,7 @@ function TrackPage() {
                   <Target className="h-3.5 w-3.5" /> لماذا هذا المسار؟
                 </div>
                 <ul className="mt-2 space-y-1.5">
-                  {t.reasons.map((r) => (
+                  {t.reasons.map((r: any) => (
                     <li key={r} className="flex items-start gap-2 text-xs">
                       <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[color:var(--success)]" />
                       <span>{r}</span>
@@ -109,7 +109,7 @@ function TrackPage() {
                   <BookMarked className="h-3.5 w-3.5" /> مواد اختيارية مقترحة
                 </div>
                 <div className="mt-2 space-y-1.5">
-                  {t.electives.map((e) => (
+                  {t.electives.map((e: any) => (
                     <div key={e.code} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
                       <span className="text-sm">{e.name}</span>
                       <span className="rounded-md bg-secondary px-1.5 py-0.5 text-[10px] font-bold text-[color:var(--navy)]">{e.code}</span>

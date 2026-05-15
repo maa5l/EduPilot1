@@ -34,7 +34,7 @@ function RadarPage() {
 
       {/* Course Cards Grid */}
       <div className="mb-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-         {alerts.length > 0 ? alerts.map((alert, idx) => (
+         {alerts.length > 0 ? alerts.map((alert: any, idx: number) => (
            <div key={idx} className="rounded-3xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md">
               <div className="mb-4 flex items-center justify-between">
                  <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold bg-red-50 text-red-600">
