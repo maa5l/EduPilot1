@@ -54,16 +54,37 @@ class PathReroute:
 
 
 @dataclass
+class TermBlock:
+    term_label: str
+    courses: list[dict] = field(default_factory=list)
+    total_hours: int = 0
+    focus: str = ""
+
+
+@dataclass
+class EarlyGradPlan:
+    id: str
+    title: str
+    summary: str
+    estimated_terms_saved: str
+    terms: list[TermBlock]
+
+
+@dataclass
 class PathEngineResult:
     graph_nodes: int
     graph_edges: int
     reroutes: list[PathReroute]
+    early_graduation_plans: list[EarlyGradPlan] = field(default_factory=list)
+    is_struggling: bool = False
 
     def to_dict(self) -> dict:
         return {
             "graph_nodes": self.graph_nodes,
             "graph_edges": self.graph_edges,
             "reroutes": [asdict(r) for r in self.reroutes],
+            "early_graduation_plans": [asdict(p) for p in self.early_graduation_plans],
+            "is_struggling": self.is_struggling,
         }
 
 
@@ -272,6 +293,215 @@ def find_alternatives(
     )
 
 
+MAX_TERM_HOURS = 15
+
+
+def _course_dict(c: PlanCourse) -> dict:
+    return {"code": c.code, "name": c.name, "hours": c.hours}
+
+
+def _greedy_term(
+    plan_idx: dict[str, PlanCourse],
+    forward: dict[str, list[str]],
+    passed_sim: set[str],
+    failed_codes: set[str],
+    locked: set[str],
+    strengths: dict[str, float],
+    max_hours: int,
+    force_include: list[PlanCourse] | None = None,
+) -> list[PlanCourse]:
+    """Pick courses for one term: unlock-heavy, skill-matched, within hour cap."""
+    result: list[PlanCourse] = []
+    hours = 0
+    scheduled = set(locked)
+
+    if force_include:
+        for c in force_include:
+            if c.code in scheduled:
+                continue
+            result.append(c)
+            hours += c.hours
+            scheduled.add(c.code)
+
+    candidates: list[tuple[PlanCourse, int, int]] = []
+    for c in plan_idx.values():
+        if c.code in passed_sim or c.code in scheduled:
+            continue
+        if c.code in failed_codes:
+            continue
+        if any(p not in passed_sim for p in c.prerequisites):
+            continue
+        if any(p in failed_codes for p in c.prerequisites):
+            continue
+        uc = len(forward.get(c.code, []))
+        sm = _skill_match_for(c, strengths)
+        candidates.append((c, uc, sm))
+
+    candidates.sort(key=lambda x: (-x[1], -x[2], x[0].difficulty))
+
+    for c, _, _ in candidates:
+        if hours + c.hours <= max_hours:
+            result.append(c)
+            hours += c.hours
+            scheduled.add(c.code)
+    return result
+
+
+def _current_term_block(record: StudentRecord, plan_idx: dict[str, PlanCourse]) -> TermBlock:
+    courses: list[dict] = []
+    th = 0
+    for code in record.current_term_courses:
+        if code in plan_idx:
+            c = plan_idx[code]
+            courses.append(_course_dict(c))
+            th += c.hours
+    return TermBlock(
+        term_label="الفصل الحالي (مسجّل)",
+        courses=courses,
+        total_hours=th,
+        focus="أكملي التحميل الحالي؛ نفترض النجاح لبناء الخطة اللاحقة",
+    )
+
+
+def build_early_graduation_plans(record: StudentRecord, reroutes: list[PathReroute]) -> list[EarlyGradPlan]:
+    """Multi-term roadmaps for students with failure/yearly risk — early graduation focus."""
+    failed_list = list(getattr(record, "failed_or_dropped", []) or [])
+    failed = set(failed_list)
+    is_risk = bool(failed) or bool(reroutes)
+    if not is_risk:
+        return []
+
+    plan_idx = _index_plan(record.plan)
+    forward, _ = _build_graph(record.plan)
+    passed_idx = _index_passed(record.passed_courses)
+    strengths = _student_domain_strength(passed_idx)
+
+    saved_hint = ""
+    if reroutes:
+        saved_hint = reroutes[0].expected_outcome
+    elif failed:
+        saved_hint = "تجنّبي فصلاً بلا مواد إجبارية عبر التسجيل الموازي"
+
+    current_block = _current_term_block(record, plan_idx)
+    plans: list[EarlyGradPlan] = []
+
+    # --- Plan A: parallel acceleration (no waiting for yearly retake slot to fill hours)
+    passed_sim = set(passed_idx.keys()) | set(record.current_term_courses)
+    locked = set(record.current_term_courses)
+    terms_a: list[TermBlock] = [current_block]
+    labels = ["الفصل القادم — تسريع موازٍ", "الفصل الذي يليه", "فصل لاحق (تقديري)"]
+    for label in labels:
+        picked = _greedy_term(
+            plan_idx, forward, passed_sim, failed, locked, strengths, MAX_TERM_HOURS
+        )
+        if not picked:
+            break
+        th = sum(c.hours for c in picked)
+        terms_a.append(
+            TermBlock(
+                term_label=label,
+                courses=[_course_dict(c) for c in picked],
+                total_hours=th,
+                focus="أولوية لمواد تفتح مسارات لاحقة + ملاءمة قدراتك",
+            )
+        )
+        for c in picked:
+            passed_sim.add(c.code)
+            locked.add(c.code)
+
+    plans.append(
+        EarlyGradPlan(
+            id="parallel-accelerate",
+            title="التخرج المبكر — مسار موازٍ",
+            summary=(
+                "مواد لا تعتمد على المادة المتعثرة؛ تجميع ساعات ومهارات دون فصل جامد "
+                "بينما تنتظرين عرض المادة السنوية."
+            ),
+            estimated_terms_saved=saved_hint or "تقدير: فصل أو أكثر مقارنةً بالانتظار دون تسجيل",
+            terms=terms_a,
+        )
+    )
+
+    # --- Plan B: retake when offered, then sprint (only if there are failures)
+    if failed_list:
+        passed_sim_b = set(passed_idx.keys()) | set(record.current_term_courses)
+        locked_b = set(record.current_term_courses)
+        terms_b: list[TermBlock] = [current_block]
+
+        retakes = [plan_idx[c] for c in failed_list if c in plan_idx]
+        rt_hours = sum(c.hours for c in retakes)
+        next_hours_cap = max(3, MAX_TERM_HOURS - rt_hours)
+        fillers = _greedy_term(
+            plan_idx,
+            forward,
+            passed_sim_b,
+            failed,
+            locked_b,
+            strengths,
+            next_hours_cap,
+            force_include=retakes,
+        )
+
+        th2 = sum(c.hours for c in fillers)
+        unlock_names = ""
+        if retakes:
+            bc = retakes[0].code
+            unlock_names = "، ".join(
+                plan_idx[u].name for u in forward.get(bc, [])[:2] if u in plan_idx
+            )
+        terms_b.append(
+            TermBlock(
+                term_label="الفصل القادم — إعادة المتعثرة + تعويض",
+                courses=[_course_dict(c) for c in fillers],
+                total_hours=th2,
+                focus=(
+                    "أعدي المتعثرة عند أول عرض؛ أضيفي مادة أو مادتين موازيتين لا ترتبطان بها"
+                    + (f". بعد النجاح تتاح: {unlock_names}" if unlock_names else "")
+                ),
+            )
+        )
+        for c in fillers:
+            passed_sim_b.add(c.code)
+            locked_b.add(c.code)
+        # Assume retake success: unblock dependents
+        for c in failed_list:
+            passed_sim_b.add(c)
+
+        for label in ["الفصل الذي يليه — بعد النجاح", "فصل لاحق — دفع نحو الإكمال"]:
+            picked = _greedy_term(
+                plan_idx, forward, passed_sim_b, set(), locked_b, strengths, MAX_TERM_HOURS
+            )
+            if not picked:
+                break
+            th3 = sum(c.hours for c in picked)
+            terms_b.append(
+                TermBlock(
+                    term_label=label,
+                    courses=[_course_dict(c) for c in picked],
+                    total_hours=th3,
+                    focus="تسريع نحو إغلاق المتطلبات والاختياري",
+                )
+            )
+            for c in picked:
+                passed_sim_b.add(c.code)
+                locked_b.add(c.code)
+
+        plans.append(
+            EarlyGradPlan(
+                id="recover-then-sprint",
+                title="التعافي ثم التسريع — نحو التخرج المبكر",
+                summary=(
+                    "خطة تلتقط المادة المتعثرة فور توفرها، ثم تضغط مواداً فتحها نجاحك "
+                    "لاستعادة الزمن المفقود."
+                ),
+                estimated_terms_saved="بعد إعادة المتعثرة: اختصار تأخير مسار الأمن/المواد اللاحقة",
+                terms=terms_b,
+            )
+        )
+
+    return plans
+
+
 def run_path_engine(record: StudentRecord) -> PathEngineResult:
     plan_idx = _index_plan(record.plan)
     forward, reverse = _build_graph(record.plan)
@@ -296,8 +526,14 @@ def run_path_engine(record: StudentRecord) -> PathEngineResult:
                     reroutes.append(reroute)
                     break
 
+    failed_set = set(getattr(record, "failed_or_dropped", []) or [])
+    is_struggling = bool(failed_set) or bool(reroutes)
+    early_plans = build_early_graduation_plans(record, reroutes) if is_struggling else []
+
     return PathEngineResult(
         graph_nodes=len(plan_idx),
         graph_edges=edges,
         reroutes=reroutes,
+        early_graduation_plans=early_plans,
+        is_struggling=is_struggling,
     )

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, Loader2, Zap, CheckCircle2, ShieldAlert, GitBranch } from "lucide-react";
+import { ArrowLeft, Loader2, Zap, CheckCircle2, ShieldAlert, GitBranch, CalendarRange } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDashboardData } from "@/lib/api";
 
@@ -34,6 +34,21 @@ type PathReroute = {
   next_term_suggestion: string;
 };
 
+type TermBlock = {
+  term_label: string;
+  courses: { code: string; name: string; hours: number }[];
+  total_hours: number;
+  focus: string;
+};
+
+type EarlyGradPlanType = {
+  id: string;
+  title: string;
+  summary: string;
+  estimated_terms_saved: string;
+  terms: TermBlock[];
+};
+
 function RadarPage() {
   const { data, isLoading } = useQuery({
     queryKey: ["dashboard"],
@@ -53,6 +68,9 @@ function RadarPage() {
   const alerts: Alert[] = data?.alerts || [];
   const reroutes: PathReroute[] = data?.shortest_path?.reroutes || [];
   const graphNodes = data?.shortest_path?.graph_nodes ?? 0;
+  const earlyPlans: EarlyGradPlanType[] = data?.shortest_path?.early_graduation_plans || [];
+  const isStruggling = Boolean(data?.shortest_path?.is_struggling);
+  const failedList: string[] = data?.student?.failed_or_dropped || [];
 
   return (
     <AppLayout title="الرادار الاستباقي للمتطلبات الأساسية">
@@ -62,6 +80,76 @@ function RadarPage() {
           عند التعثر أو الحذف يحسب المحرك أقصر مسار بديل بمواد تلائم قدراتك.
         </p>
       </div>
+
+      {isStruggling && earlyPlans.length > 0 && (
+        <section className="mb-12">
+          <div className="mb-6 flex flex-col items-center gap-2 text-center md:flex-row md:justify-between md:text-right">
+            <div className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--royal)]/15 text-[color:var(--royal)]">
+                <CalendarRange className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="text-lg font-extrabold text-[color:var(--navy)]">خطط مقترحة للتخرج المبكر</h2>
+                <p className="text-xs text-muted-foreground">
+                  {failedList.length > 0
+                    ? `حالة متعثرة: ${failedList.join("، ")} — جدول مقترح لاستعادة الزمن وتجميع الساعات`
+                    : "سيناريو خطر على المسار — بدائل تسجيل على عدة فصول"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-2">
+            {earlyPlans.map((plan) => (
+              <article
+                key={plan.id}
+                className="overflow-hidden rounded-3xl border-2 border-[color:var(--royal)]/25 bg-card shadow-[var(--shadow-card)]"
+              >
+                <div className="bg-gradient-to-l from-[color:var(--navy)] to-[color:var(--royal)] px-6 py-4 text-white">
+                  <h3 className="text-base font-extrabold">{plan.title}</h3>
+                  <p className="mt-1 text-[11px] text-white/85 leading-relaxed">{plan.summary}</p>
+                  <p className="mt-2 text-[10px] font-bold text-[color:var(--success)]">{plan.estimated_terms_saved}</p>
+                </div>
+                <div className="space-y-4 p-5">
+                  {plan.terms.map((term, idx) => (
+                    <div
+                      key={`${plan.id}-${idx}-${term.term_label}`}
+                      className="rounded-2xl border border-border bg-muted/20 p-4"
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-extrabold text-[color:var(--royal)]">
+                          {term.term_label}
+                        </span>
+                        <span className="rounded-full bg-secondary px-2 py-0.5 text-[10px] font-bold">
+                          {term.total_hours} ساعة
+                        </span>
+                      </div>
+                      <ul className="space-y-1.5">
+                        {term.courses.map((c) => (
+                          <li
+                            key={c.code}
+                            className="flex items-center justify-between gap-2 text-xs"
+                          >
+                            <span className="font-medium text-[color:var(--navy)]">{c.name}</span>
+                            <span className="shrink-0 rounded bg-white px-1.5 py-0.5 text-[10px] font-bold ring-1 ring-border">
+                              {c.code} · {c.hours}س
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                      {term.focus && (
+                        <p className="mt-2 border-t border-border pt-2 text-[10px] leading-relaxed text-muted-foreground">
+                          {term.focus}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
 
       <div className="mb-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {alerts.length > 0 ? (

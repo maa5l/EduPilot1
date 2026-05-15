@@ -88,6 +88,7 @@ def get_dashboard(request: Request) -> dict[str, Any]:
         "gpa": record.gpa,
         "passed_courses": [{"code": c.code, "name": c.name, "grade": c.grade} for c in record.passed_courses],
         "current_term_courses": record.current_term_courses,
+        "failed_or_dropped": list(getattr(record, "failed_or_dropped", []) or []),
     }
     
     plan_data = [
