@@ -35,20 +35,21 @@ CREATE TABLE IF NOT EXISTS public.academic_analysis (
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.academic_analysis ENABLE ROW LEVEL SECURITY;
 
--- سياسة: يمكن للمستخدم قراءة بياناته فقط
-CREATE POLICY "Users can view own profile" 
-    ON public.profiles FOR SELECT 
-    USING ( auth.uid() = id );
+-- سياسات الأمان (يمكن إعادة تشغيل السكربت بأمان)
+DROP POLICY IF EXISTS "Users can view own profile" ON public.profiles;
+CREATE POLICY "Users can view own profile"
+    ON public.profiles FOR SELECT
+    USING (auth.uid() = id);
 
--- سياسة: يمكن للمستخدم تحديث بياناته فقط
-CREATE POLICY "Users can update own profile" 
-    ON public.profiles FOR UPDATE 
-    USING ( auth.uid() = id );
+DROP POLICY IF EXISTS "Users can update own profile" ON public.profiles;
+CREATE POLICY "Users can update own profile"
+    ON public.profiles FOR UPDATE
+    USING (auth.uid() = id);
 
--- سياسة: قراءة التحليلات الخاصة بالمستخدم فقط
-CREATE POLICY "Users can view own analysis" 
-    ON public.academic_analysis FOR SELECT 
-    USING ( auth.uid() = student_uuid );
+DROP POLICY IF EXISTS "Users can view own analysis" ON public.academic_analysis;
+CREATE POLICY "Users can view own analysis"
+    ON public.academic_analysis FOR SELECT
+    USING (auth.uid() = student_uuid);
 
 -- =================================================================================
 -- 4. المحفزات التلقائية (Triggers)
@@ -63,6 +64,7 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_profiles_modtime ON public.profiles;
 CREATE TRIGGER update_profiles_modtime
     BEFORE UPDATE ON public.profiles
     FOR EACH ROW
@@ -84,6 +86,7 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- تفعيل المحفز لإنشاء الملف الشخصي عند التسجيل
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();

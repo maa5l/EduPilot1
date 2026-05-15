@@ -1,0 +1,22 @@
+إذا start.bat ما اشتغل — جرّب يدوياً:
+
+1) افتح CMD
+2) اكتب:
+   cd /d c:\Users\goida\Desktop\ED-1\ED-1\api
+   python -m pip install -r requirements.txt
+   python main.py
+
+3) انتظر حتى ترى:
+   Uvicorn running on http://127.0.0.1:8000
+
+4) افتح المتصفح:
+   http://127.0.0.1:8000/
+
+5) للتأكد أن السيرفر شغال:
+   http://127.0.0.1:8000/api/health
+
+تسجيل الدخول التجريبي:
+   الرقم: 445004397
+   كلمة المرور: أي شيء
+
+لا تفتح dist\index.html مباشرة (دبل كليك) — لن يعمل.

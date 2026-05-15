@@ -45,6 +45,17 @@ USERS = {
     "445031381": "غيداء العمري"
 }
 
+
+@app.get("/api/health")
+@app.get("/health")
+def health() -> dict[str, Any]:
+    return {
+        "ok": True,
+        "frontend": FRONTEND_DIR.exists(),
+        "frontend_path": str(FRONTEND_DIR),
+    }
+
+
 @app.get("/api/dashboard")
 @app.get("/dashboard")
 def get_dashboard(request: Request) -> dict[str, Any]:

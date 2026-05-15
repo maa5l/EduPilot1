@@ -9,20 +9,34 @@ EN: Database manager to connect to Supabase from the backend.
 
 import os
 from dotenv import load_dotenv
-from supabase import create_client, Client
-from pydantic import BaseModel
 from typing import Optional, Any, Dict
+
+try:
+    from supabase import create_client, Client
+except ImportError:
+    create_client = None  # type: ignore[assignment,misc]
+    Client = Any  # type: ignore[misc,assignment]
 
 # تحميل المتغيرات من ملف .env الموجود في المجلد الجذري
 load_dotenv(os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'))
 
-# إعدادات الاتصال من ملف البيئة
-SUPABASE_URL = os.getenv("SUPABASE_URL")
-SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+# إعدادات الاتصال من ملف البيئة (يدعم أسماء المتغيرات القديمة والجديدة)
+SUPABASE_URL = (
+    os.getenv("SUPABASE_URL")
+    or os.getenv("VITE_SUPABASE_URL")
+)
+SUPABASE_KEY = (
+    os.getenv("SUPABASE_KEY")
+    or os.getenv("SUPABASE_ANON_KEY")
+    or os.getenv("VITE_SUPABASE_ANON_KEY")
+)
 
 # تهيئة العميل
 def get_supabase_client() -> Optional[Client]:
     """يقوم بإنشاء وإرجاع كائن الاتصال بسوبابيس إذا توفرت المفاتيح."""
+    if create_client is None:
+        print("[Supabase Error] Package 'supabase' is not installed. Run: pip install -r requirements.txt")
+        return None
     if not SUPABASE_URL or not SUPABASE_KEY:
         return None
     try:

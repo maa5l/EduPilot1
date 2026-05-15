@@ -6,88 +6,101 @@ cd /d "%~dp0"
 
 echo.
 echo ============================================================
-echo                  EduPilot - Senior Project
+echo                  EduPilot - تشغيل المشروع
 echo ============================================================
 echo.
 
-REM ----- 1) Locate Python (try both 'python' and 'py') -----
-echo [1/4] Locating Python...
+if not exist "dist\index.html" (
+  echo  X  مجلد dist غير موجود. المشروع يحتاج dist\index.html
+  echo.
+  pause
+  exit /b 1
+)
+
+REM ----- 1) Locate Python -----
+echo [1/4] البحث عن Python...
 set PYCMD=
 where python >nul 2>&1
 if not errorlevel 1 set PYCMD=python
 if "%PYCMD%"=="" (
   where py >nul 2>&1
-  if not errorlevel 1 set PYCMD=py
+  if not errorlevel 1 set PYCMD=py -3
 )
 
 if "%PYCMD%"=="" (
   echo.
-  echo  X  Python is NOT installed or not in PATH.
-  echo.
-  echo  Please install Python from: https://www.python.org/downloads/
-  echo  Make sure to CHECK the box "Add Python to PATH" during install.
+  echo  X  Python غير مثبت أو غير مضاف لـ PATH.
+  echo  ثبّته من: https://www.python.org/downloads/
+  echo  وفعّل: Add Python to PATH
   echo.
   pause
   exit /b 1
 )
 
 %PYCMD% --version
-echo  OK  Python found as "%PYCMD%".
+echo  OK  Python: %PYCMD%
 echo.
 
-REM ----- 2) Install backend dependencies -----
-echo [2/4] Installing backend dependencies (~1 min on first run)...
+REM ----- 2) Install dependencies -----
+echo [2/4] تثبيت مكتبات الباكند ^(قد يأخذ دقيقة^)...
 cd api
-%PYCMD% -m pip install --quiet --disable-pip-version-check -r requirements.txt
+%PYCMD% -m pip install -r requirements.txt
 set INSTALL_ERR=%errorlevel%
-cd ..
-
 if %INSTALL_ERR% NEQ 0 (
   echo.
-  echo  !  Backend dependencies failed to install ^(no internet?^)
-  echo  !  Falling back to FRONTEND-ONLY mode...
-  echo.
-  goto FRONTEND_ONLY
+  echo  X  فشل تثبيت المكتبات. تحقق من الإنترنت ثم أعد المحاولة.
+  echo  انسخ أي رسالة خطأ حمراء من هذه النافذة وأرسلها للدعم.
+  cd ..
+  pause
+  exit /b 1
 )
 
-echo  OK  All dependencies installed.
+%PYCMD% -c "import fastapi, uvicorn" >nul 2>&1
+if errorlevel 1 (
+  echo  X  FastAPI لم يُثبّت بشكل صحيح.
+  cd ..
+  pause
+  exit /b 1
+)
+cd ..
+echo  OK  المكتبات جاهزة.
 echo.
 
-REM ----- 3) Start the FULL server (Python + Frontend) -----
-echo [3/4] Starting EduPilot full server...
+REM ----- 3) Check port 8000 -----
+echo [3/4] التحقق من المنفذ 8000...
+netstat -ano | findstr ":8000 " | findstr "LISTENING" >nul 2>&1
+if not errorlevel 1 (
+  echo  !  المنفذ 8000 مستخدم. أغلق أي نافذة EduPilot قديمة ثم أعد التشغيل.
+  echo.
+)
+
+REM ----- 4) Start server -----
+echo [4/4] تشغيل السيرفر...
 echo.
-echo   - Open in browser:  http://127.0.0.1:8000/
-echo   - API:              http://127.0.0.1:8000/api/dashboard
+echo   بعد ظهور: Uvicorn running on http://127.0.0.1:8000
+echo   افتح المتصفح:  http://127.0.0.1:8000/
 echo.
-echo   Press Ctrl+C to stop the server.
+echo   لا تغلق هذه النافذة أثناء الاستخدام.
+echo   Ctrl+C لإيقاف السيرفر.
 echo ============================================================
 echo.
 
-start "" cmd /c "timeout /t 4 /nobreak >nul & start http://127.0.0.1:8000/"
+start "" cmd /c "timeout /t 8 /nobreak >nul & start http://127.0.0.1:8000/"
+
 cd api
 %PYCMD% main.py
+set SERVER_ERR=%errorlevel%
 cd ..
 
 echo.
-echo [4/4] Server stopped.
+if %SERVER_ERR% NEQ 0 (
+  echo  X  توقف السيرفر بخطأ ^(كود %SERVER_ERR%^).
+  echo  جرّب من CMD يدوياً:
+  echo    cd /d "%~dp0api"
+  echo    %PYCMD% main.py
+) else (
+  echo  السيرفر توقف بشكل طبيعي.
+)
+echo.
 pause
-exit /b 0
-
-:FRONTEND_ONLY
-echo [3/4] Starting frontend-only server (offline mode)...
-echo.
-echo   - Open in browser:  http://127.0.0.1:5500/
-echo   - Embedded data will be used (no Python AI engine).
-echo.
-echo   Press Ctrl+C to stop.
-echo ============================================================
-echo.
-
-start "" cmd /c "timeout /t 4 /nobreak >nul & start http://127.0.0.1:5500/"
-cd dist
-%PYCMD% -m http.server 5500
-cd ..
-
-echo.
-echo [4/4] Server stopped.
-pause
+exit /b %SERVER_ERR%
