@@ -1,14 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
 import AppLayout from "@/components/AppLayout";
-import { ArrowLeft, Loader2, Zap, CheckCircle2, ShieldAlert } from "lucide-react";
+import { ArrowLeft, Loader2, Zap, CheckCircle2, ShieldAlert, GitBranch } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchDashboardData } from "@/lib/api";
 
 export const Route = createFileRoute("/radar")({ component: RadarPage });
 
+type Alert = {
+  severity: string;
+  title: string;
+  body: string;
+  course_code?: string;
+  yearly?: boolean;
+};
+
+type Alternative = {
+  code: string;
+  name: string;
+  skill_match: number;
+  difficulty: number;
+  rationale: string;
+};
+
+type PathReroute = {
+  blocked_course_code: string;
+  blocked_course_name: string;
+  scenario: string;
+  delay_if_wait_terms: number;
+  delay_if_wait_label: string;
+  blocked_unlocks: { code: string; name: string }[];
+  alternatives: Alternative[];
+  expected_outcome: string;
+  next_term_suggestion: string;
+};
+
 function RadarPage() {
   const { data, isLoading } = useQuery({
-    queryKey: ['dashboard'],
+    queryKey: ["dashboard"],
     queryFn: fetchDashboardData,
   });
 
@@ -22,86 +50,138 @@ function RadarPage() {
     );
   }
 
-  const alerts = data?.alerts || [];
+  const alerts: Alert[] = data?.alerts || [];
+  const reroutes: PathReroute[] = data?.shortest_path?.reroutes || [];
+  const graphNodes = data?.shortest_path?.graph_nodes ?? 0;
 
   return (
     <AppLayout title="الرادار الاستباقي للمتطلبات الأساسية">
       <div className="mb-10 text-center">
-         <p className="mx-auto max-w-4xl text-sm leading-relaxed text-muted-foreground">
-            رصد ذكي للمواد التي تُفتح بشكل دوري وتُعد متطلباً أساسياً لمواد قادمة. إذا تعثرت في إحدى هذه المواد، نقترح لك "أقصر مسار" بديل لئلا يتأخر تخرجك.
-         </p>
+        <p className="mx-auto max-w-4xl text-sm leading-relaxed text-muted-foreground">
+          رصد ذكي للمواد السنوية والمتطلبات الأساسية. الخطة ممثّلة كشبكة ({graphNodes} عقدة) —
+          عند التعثر أو الحذف يحسب المحرك أقصر مسار بديل بمواد تلائم قدراتك.
+        </p>
       </div>
 
-      {/* Course Cards Grid */}
       <div className="mb-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-         {alerts.length > 0 ? alerts.map((alert: any, idx: number) => (
-           <div key={idx} className="rounded-3xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md">
+        {alerts.length > 0 ? (
+          alerts.map((alert, idx) => (
+            <div
+              key={`${alert.course_code}-${idx}`}
+              className="rounded-3xl border border-border bg-card p-6 shadow-sm transition hover:shadow-md"
+            >
               <div className="mb-4 flex items-center justify-between">
-                 <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold bg-red-50 text-red-600">
-                    <ShieldAlert className="h-3.5 w-3.5" /> خطر مرتفع
-                 </div>
+                <div className="flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold bg-red-50 text-red-600">
+                  <ShieldAlert className="h-3.5 w-3.5" />
+                  {alert.severity === "critical" ? "خطر مرتفع" : "تنبيه"}
+                </div>
               </div>
               <h3 className="text-lg font-extrabold text-[color:var(--navy)]">{alert.title}</h3>
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">
-                {alert.body}
-              </p>
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{alert.body}</p>
               <div className="mt-8">
-                 <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">التوصية:</div>
-                 <div className="flex items-center gap-2 text-[11px] font-bold text-[color:var(--navy)]">
-                    <ArrowLeft className="h-3.5 w-3.5 text-[color:var(--royal)]" /> سجل المادة في أقرب فرصة
-                 </div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-4">
+                  التوصية:
+                </div>
+                <div className="flex items-center gap-2 text-[11px] font-bold text-[color:var(--navy)]">
+                  <ArrowLeft className="h-3.5 w-3.5 text-[color:var(--royal)]" />
+                  {alert.yearly ? "سجّلي المادة في أقرب فرصة — مادة سنوية" : "راجعي الخطة مع المستشار"}
+                </div>
               </div>
-           </div>
-         )) : (
-           <div className="col-span-full py-20 text-center text-muted-foreground">لا توجد تنبيهات نشطة حالياً.</div>
-         )}
+            </div>
+          ))
+        ) : (
+          <div className="col-span-full py-20 text-center text-muted-foreground">
+            لا توجد تنبيهات نشطة حالياً.
+          </div>
+        )}
       </div>
 
-      {/* Shortest Path Alternative */}
-      <section className="rounded-3xl border border-border bg-card shadow-sm overflow-hidden border-b-4 border-b-[color:var(--navy)]">
-         <div className="flex items-center justify-between bg-white px-8 py-5 border-b border-border">
+      {reroutes.map((reroute) => (
+        <section
+          key={reroute.blocked_course_code}
+          className="mb-8 rounded-3xl border border-border bg-card shadow-sm overflow-hidden border-b-4 border-b-[color:var(--navy)]"
+        >
+          <div className="flex items-center justify-between bg-white px-8 py-5 border-b border-border">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:var(--navy)] text-white shadow-xl">
-               <Zap className="h-5 w-5" />
+              <Zap className="h-5 w-5" />
             </div>
             <div className="text-right">
-               <h3 className="text-lg font-extrabold text-[color:var(--navy)]">أقصر مسار بديل (Shortest Path)</h3>
-               <p className="text-[10px] text-muted-foreground font-medium">مقترحات الذكاء الاصطناعي في حال عدم التمكن من تسجيل مادة متطلب</p>
+              <h3 className="text-lg font-extrabold text-[color:var(--navy)]">
+                أقصر مسار بديل — {reroute.blocked_course_name}
+              </h3>
+              <p className="text-[10px] text-muted-foreground font-medium">{reroute.scenario}</p>
             </div>
-         </div>
+          </div>
 
-         <div className="grid md:grid-cols-3 gap-0">
+          <div className="grid md:grid-cols-3 gap-0">
             <div className="p-8 border-l border-border bg-green-50/20">
-               <div className="mb-6 flex items-center justify-end gap-2 text-[10px] font-extrabold text-[color:var(--success)] uppercase tracking-wider">
-                  النتيجة المتوقعة <CheckCircle2 className="h-4 w-4" />
-               </div>
-               <div className="text-right">
-                  <div className="text-base font-extrabold text-[color:var(--success)]">توفير فصل دراسي كامل</div>
-                  <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
-                     تجاوز العقبات الأكاديمية بنجاح عبر اختيار مواد بديلة متوازية.
-                  </p>
-               </div>
+              <div className="mb-6 flex items-center justify-end gap-2 text-[10px] font-extrabold text-[color:var(--success)] uppercase tracking-wider">
+                النتيجة المتوقعة <CheckCircle2 className="h-4 w-4" />
+              </div>
+              <div className="text-right">
+                <div className="text-base font-extrabold text-[color:var(--success)]">
+                  {reroute.expected_outcome}
+                </div>
+                <p className="mt-3 text-[10px] leading-relaxed text-muted-foreground">
+                  {reroute.next_term_suggestion}
+                </p>
+              </div>
             </div>
 
             <div className="p-8 border-l border-border bg-slate-50/30">
-               <div className="mb-6 flex items-center justify-end text-[10px] font-extrabold text-[color:var(--royal)] uppercase">
-                  البديل المقترح
-               </div>
-               <div className="space-y-3 text-right text-xs font-bold">
-                  <div>مواد اختيارية تخصصية</div>
-                  <div>تدريب صيفي مكثف</div>
-               </div>
+              <div className="mb-6 flex items-center justify-end text-[10px] font-extrabold text-[color:var(--royal)] uppercase">
+                البدائل المقترحة (حسب ملاءمة مهاراتك)
+              </div>
+              <div className="space-y-3 text-right">
+                {reroute.alternatives.map((alt) => (
+                  <div
+                    key={alt.code}
+                    className="rounded-lg border border-border bg-white px-3 py-2 text-xs"
+                  >
+                    <div className="flex items-center justify-between font-bold text-[color:var(--navy)]">
+                      <span>{alt.code}</span>
+                      <span className="text-[color:var(--success)]">{alt.skill_match}% ملاءمة</span>
+                    </div>
+                    <div className="mt-1 font-medium">{alt.name}</div>
+                    <p className="mt-1 text-[10px] text-muted-foreground">{alt.rationale}</p>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="p-8">
-               <div className="mb-6 flex items-center justify-end text-[10px] font-extrabold text-red-500 uppercase">
-                  المسار المتعثر
-               </div>
-               <div className="text-right text-[10px] text-muted-foreground leading-relaxed">
-                  تأخر التخرج المتوقع لمدة فصلين دراسيين في حال عدم اتخاذ إجراء.
-               </div>
+              <div className="mb-6 flex items-center justify-end text-[10px] font-extrabold text-red-500 uppercase">
+                المسار المتعثر
+              </div>
+              <div className="text-right text-[10px] text-muted-foreground leading-relaxed space-y-2">
+                <p>{reroute.delay_if_wait_label}</p>
+                {reroute.blocked_unlocks.length > 0 && (
+                  <div>
+                    <div className="font-bold text-red-600 mb-1">مواد تُغلق بدونها:</div>
+                    <ul className="space-y-1">
+                      {reroute.blocked_unlocks.map((u) => (
+                        <li key={u.code}>
+                          {u.code} — {u.name}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                <div className="flex items-center justify-end gap-1 mt-4 text-[color:var(--navy)] font-bold">
+                  <GitBranch className="h-3.5 w-3.5" />
+                  الالتفاف الذكي عبر مواد لا تتطلب {reroute.blocked_course_code}
+                </div>
+              </div>
             </div>
-         </div>
-      </section>
+          </div>
+        </section>
+      ))}
+
+      {reroutes.length === 0 && (
+        <section className="rounded-3xl border border-dashed border-border bg-muted/20 p-10 text-center text-sm text-muted-foreground">
+          لا توجد سيناريوهات التفاف حالياً — خطتك متوازنة.
+        </section>
+      )}
     </AppLayout>
   );
 }

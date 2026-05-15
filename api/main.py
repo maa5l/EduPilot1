@@ -21,6 +21,7 @@ from pdf_extractor import extract_all
 from database import verify_auth_token, save_analysis_to_db
 from fallback_data import build_fallback_record
 from career_engine import analyze_career_paths
+from path_engine import run_path_engine
 
 # On Vercel, the dist folder is in the parent directory
 FRONTEND_DIR = API_DIR.parent / "dist"
@@ -89,14 +90,28 @@ def get_dashboard(request: Request) -> dict[str, Any]:
         "current_term_courses": record.current_term_courses,
     }
     
-    plan_data = [{"code": c.code, "name": c.name} for c in record.plan]
-    career_paths = analyze_career_paths(record)
-    
+    plan_data = [
+        {
+            "code": c.code,
+            "name": c.name,
+            "hours": c.hours,
+            "level": c.level,
+            "type": c.type,
+            "yearly_only": c.yearly_only,
+            "prerequisites": c.prerequisites,
+        }
+        for c in record.plan
+    ]
+    track_analysis = analyze_career_paths(record)
+    path_analysis = run_path_engine(record)
+
     return {
         "student": student_data,
         **result.to_dict(),
         "plan": plan_data,
-        "career_paths": [asdict(p) for p in career_paths]
+        "career_paths": track_analysis.to_dict()["paths"],
+        "track_recommendation": track_analysis.to_dict(),
+        "shortest_path": path_analysis.to_dict(),
     }
 
 class ChatRequest(BaseModel):

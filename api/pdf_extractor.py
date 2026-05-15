@@ -89,6 +89,7 @@ class StudentRecord:
     passed_courses: list[PassedCourse] = field(default_factory=list)
     plan: list[PlanCourse] = field(default_factory=list)
     current_term_courses: list[str] = field(default_factory=list)
+    failed_or_dropped: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return asdict(self)
