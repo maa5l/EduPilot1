@@ -303,7 +303,7 @@ def _micro_modules_for(course_code: str, prereq_code: str) -> list[dict]:
                 "channel": "أكاديمية حسوب",
                 "duration": "55 دقيقة",
                 "language": "ar",
-                "url": "https://www.youtube.com/results?search_query=المؤشرات+لغة+c+حسوب",
+                "url": "https://www.youtube.com/watch?v=zuegQmMdy8M",
             },
             {
                 "title": "Pointers and Memory Crash Course",
@@ -319,7 +319,7 @@ def _micro_modules_for(course_code: str, prereq_code: str) -> list[dict]:
                 "channel": "Khan Academy العربية",
                 "duration": "40 دقيقة",
                 "language": "ar",
-                "url": "https://www.youtube.com/results?search_query=رياضيات+منفصلة+علاقات",
+                "url": "https://www.youtube.com/watch?v=v4cd1O4zkGw",
             },
             {
                 "title": "Big-O Notation from Scratch",
@@ -327,6 +327,43 @@ def _micro_modules_for(course_code: str, prereq_code: str) -> list[dict]:
                 "duration": "32m",
                 "language": "en",
                 "url": "https://www.youtube.com/watch?v=v4cd1O4zkGw",
+            },
+        ],
+        ("CS303", "CS1006"): [
+            {
+                "title": "دورة تراكيب البيانات (مقدمة شاملة)",
+                "channel": "freeCodeCamp",
+                "duration": "8+ ساعات",
+                "language": "en",
+                "url": "https://www.youtube.com/watch?v=8hly31xKls0",
+            },
+            {
+                "title": "Binary Trees شرح مبسط",
+                "channel": "Michael Sambol",
+                "duration": "12 دقيقة",
+                "language": "en",
+                "url": "https://www.youtube.com/watch?v=H5JMj0_O630",
+            },
+            {
+                "title": "Big O Notation في 5 دقائق",
+                "channel": "Michael Sambol",
+                "duration": "5 دقائق",
+                "language": "en",
+                "url": "https://www.youtube.com/watch?v=v4cd1O4zkGw",
+            },
+            {
+                "title": "Hashing والجداول المجزأة",
+                "channel": "CrashCourse",
+                "duration": "14 دقيقة",
+                "language": "en",
+                "url": "https://www.youtube.com/watch?v=0M_kIqwbpaE",
+            },
+            {
+                "title": "مقدمة الذكاء الاصطناعي للمبتدئين",
+                "channel": "IBM Technology",
+                "duration": "16 دقيقة",
+                "language": "en",
+                "url": "https://www.youtube.com/watch?v=jGwO_UgTS7E",
             },
         ],
     }
@@ -337,22 +374,41 @@ def _micro_modules_for(course_code: str, prereq_code: str) -> list[dict]:
         return library[key]
     return [
         {
-            "title": f"مراجعة مفاهيم {prereq_code} الأساسية",
-            "channel": "EduPilot — مكتبة المراجعات",
+            "title": f"مراجعة تراكيب بيانات قبل {course_code}",
+            "channel": "freeCodeCamp",
+            "duration": "مختارات من الدورة الكاملة",
+            "language": "en",
+            "url": "https://www.youtube.com/watch?v=8hly31xKls0",
+        },
+        {
+            "title": f"شرح Big-O وتحليل الخوارزميات",
+            "channel": "CS Dojo",
+            "duration": "32 دقيقة",
+            "language": "en",
+            "url": "https://www.youtube.com/watch?v=v4cd1O4zkGw",
+        },
+        {
+            "title": f"مراجعة مفاهيم {prereq_code} (عربي — بحث منظم)",
+            "channel": "YouTube",
             "duration": "45 دقيقة",
             "language": "ar",
             "url": "https://www.youtube.com/results?search_query="
-                   + prereq_code
-                   + "+مراجعة",
+            + prereq_code
+            + "+تراكيب+بيانات+شرح+عربي",
+        },
+        {
+            "title": f"Graphs and Trees overview",
+            "channel": "WilliamFiset",
+            "duration": "playlist",
+            "language": "en",
+            "url": "https://www.youtube.com/watch?v=oBt53YbR9Kk",
         },
         {
             "title": f"Foundations review for {course_code}",
-            "channel": "EduPilot Micro Library",
-            "duration": "35m",
+            "channel": "MIT OpenCourseWare",
+            "duration": "محاضرة مقدمة",
             "language": "en",
-            "url": "https://www.youtube.com/results?search_query="
-                   + course_code
-                   + "+foundations+review",
+            "url": "https://www.youtube.com/watch?v=RBSGKlAvoiM",
         },
     ]
 

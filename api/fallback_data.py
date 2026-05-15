@@ -185,7 +185,7 @@ def build_fallback_record(student_id: str = "445004397", student_name: str = "ر
       PassedCourse("CS1005", "برمجة 1", 95.0, 4),
       PassedCourse("CS1253", "برمجة 2", 100.0, 3),
       PassedCourse("CS1251", "هياكل البيانات المتقدمة", 88.0, 3),
-      PassedCourse("CS1006", "تراكيب البيانات", 82.0, 4),
+      PassedCourse("CS1006", "تراكيب البيانات", 76.0, 4),
       PassedCourse("CS1255", "الرياضيات المتقطعة", 90.0, 3),
     ]
     # لم تُسجَّل CS1508 في الترم القادم — البديل عبر الالتفاف الذكي

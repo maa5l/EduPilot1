@@ -33,13 +33,22 @@ function Dashboard() {
   }
 
   const student = data.student;
-  const courses = data.courses || [
-    { code: "CS301", name: "هياكل البيانات", weight: 85 },
-    { code: "CS322", name: "أنظمة التشغيل", weight: 72 },
-    { code: "MATH204", name: "الرياضيات المتقطعة", weight: 60 },
-    { code: "ENG250", name: "اللغة الإنجليزية", weight: 35 },
+  /** عرض ثابت للشاشة الرئيسية (يمكن دمجه مع صعوبة الخطة عند تطابق الرمز) */
+  const MAIN_SCREEN_COURSES = [
+    { code: "CS1006", name: "تراكيب بيانات", fallback: 88 },
+    { code: "CS205", name: "قواعد بيانات", fallback: 76 },
+    { code: "STAT200", name: "احصاء", fallback: 72 },
+    { code: "ENGL215", name: "كتابة تقنية", fallback: 54 },
   ];
-  const totalLoad = Math.round(courses.reduce((a: number, c: any) => a + (c.weight || 0), 0) / courses.length);
+  const breakdown: { code: string; difficulty?: number }[] = data.load?.breakdown || [];
+  const courses = MAIN_SCREEN_COURSES.map((spec) => {
+    const b = breakdown.find((x) => x.code === spec.code);
+    const w = b?.difficulty != null ? Math.min(100, Math.round(Number(b.difficulty))) : spec.fallback;
+    return { code: spec.code, name: spec.name, weight: w };
+  });
+  const totalLoad = Math.round(
+    courses.reduce((a: number, c: { weight: number }) => a + c.weight, 0) / courses.length
+  );
   const gpa = student.gpa.toFixed(2);
   const alerts = data.alerts || [];
 
@@ -113,13 +122,20 @@ function Dashboard() {
           <p className="mt-4 text-sm text-muted-foreground">
             لكل مادة في بلاك بورد، نختار لك أفضل المصادر من يوتيوب لتختار الأنسب لأسلوبك في التعلم.
           </p>
-          <div className="mt-4 grid grid-cols-3 gap-2">
-            {courses.slice(0, 3).map((c: any) => (
-              <div key={c.code} className="rounded-lg bg-secondary p-2 text-center">
-                <div className="text-[10px] text-muted-foreground">{c.code}</div>
-                <div className="mt-1 text-[10px] font-bold text-[color:var(--royal)]">5 مصادر</div>
-              </div>
-            ))}
+          <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+            {courses.map((c: { code: string; name: string }) => {
+              const b = (data.bridges || []).find(
+                (br: { course_code: string }) => br.course_code === c.code
+              );
+              const n = Array.isArray(b?.micro_modules) ? b.micro_modules.length : 5;
+              return (
+                <div key={c.code} className="rounded-lg bg-secondary p-2 text-center">
+                  <div className="line-clamp-1 text-[9px] font-bold text-[color:var(--navy)]">{c.name}</div>
+                  <div className="text-[9px] text-muted-foreground">{c.code}</div>
+                  <div className="mt-1 text-[10px] font-bold text-[color:var(--royal)]">{n} مصادر</div>
+                </div>
+              );
+            })}
           </div>
           <div className="mt-auto flex items-center gap-1 pt-4 text-sm font-bold text-[color:var(--royal)] group-hover:gap-2">
             افتح جسور المعرفة <ArrowLeft className="h-4 w-4" />
