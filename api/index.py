@@ -16,7 +16,7 @@ if str(root_path) not in sys.path:
 
 try:
     from app import app
-    # Export the app for Vercel
+    # Export for Vercel
     handler = app
 except Exception as e:
     print(f"Error importing FastAPI app: {e}")
