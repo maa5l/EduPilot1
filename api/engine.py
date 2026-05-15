@@ -140,6 +140,33 @@ def build_proactive_alerts(record: StudentRecord) -> list[Alert]:
     plan_idx = _index_plan(record.plan)
     passed_idx = _index_passed(record.passed_courses)
     current = set(record.current_term_courses)
+    failed = set(getattr(record, "failed_or_dropped", []) or [])
+
+    for code in failed:
+        course = plan_idx.get(code)
+        if not course:
+            continue
+        unlocks = _unlocks_for(code, record.plan)
+        alerts.append(
+            Alert(
+                severity="critical",
+                title=f"تعثر في {course.code} — مسار بديل مطلوب",
+                body=(
+                    f"{'حذفتِ' if code in failed else 'تعثرتِ في'} {course.name}"
+                    + (" (مادة سنوية — تُطرح مرة في السنة)" if course.yearly_only else "")
+                    + (
+                        f". يُغلق: {'، '.join(u['name'] for u in unlocks)}. "
+                        "راجعي قسم «أقصر مسار بديل» في الرادار."
+                        if unlocks
+                        else ". راجعي الرادار لاقتراحات الالتفاف."
+                    )
+                ),
+                course_code=course.code,
+                course_name=course.name,
+                unlocks=unlocks,
+                yearly=course.yearly_only,
+            )
+        )
 
     for course in record.plan:
         already_passed = course.code in passed_idx

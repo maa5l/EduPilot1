@@ -177,17 +177,23 @@ def build_fallback_record(student_id: str = "445004397", student_name: str = "ر
     program = "بكالوريوس علوم الحاسب — جامعة الباحة"
     active_plan = plan_cs
   else:
+    # رسيل العمري — سيناريو: تعثرت/حذفت CS1508 (أمن الحاسب · سنوية)
+    # المادة تُطرح مرة في السنة وتغلق CS430 ومسار الأمن السيبراني
     passed = [
       PassedCourse("MATH1001", "تفاضل وتكامل 1", 85.0, 4),
       PassedCourse("CS1002", "مقدمة في الحوسبة والخوارزميات", 100.0, 4),
       PassedCourse("CS1005", "برمجة 1", 95.0, 4),
       PassedCourse("CS1253", "برمجة 2", 100.0, 3),
+      PassedCourse("CS1251", "هياكل البيانات المتقدمة", 88.0, 3),
+      PassedCourse("CS1006", "تراكيب البيانات", 82.0, 4),
+      PassedCourse("CS1255", "الرياضيات المتقطعة", 90.0, 3),
     ]
-    upcoming = ["CS1006", "CS1255", "CS1508"]
-    gpa = 4.15
+    # لم تُسجَّل CS1508 في الترم القادم — البديل عبر الالتفاف الذكي
+    upcoming = ["CS385", "CS378", "CS303"]
+    gpa = 3.72
     program = "بكالوريوس علوم الحاسب — جامعة الباحة"
     active_plan = plan_cs
-    failed_or_dropped = []
+    failed_or_dropped = ["CS1508"]
 
   return StudentRecord(
     student_id=student_id,

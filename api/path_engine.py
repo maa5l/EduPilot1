@@ -150,9 +150,13 @@ def _blocking_scenarios(record: StudentRecord, plan_idx: dict[str, PlanCourse], 
     for code in failed:
         if code in plan_idx:
             course = plan_idx[code]
+            unlocks = forward.get(code, [])
             reason = "تعثرتِ أو حذفتِ هذه المادة"
             if course.yearly_only:
                 reason += " (مادة سنوية — تُطرح مرة واحدة في السنة)"
+            if unlocks:
+                names = "، ".join(plan_idx[u].name for u in unlocks[:3] if u in plan_idx)
+                reason += f" — يُغلق مسار: {names}"
             scenarios.append((code, reason))
 
     for code in record.current_term_courses:
