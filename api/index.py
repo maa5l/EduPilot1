@@ -13,14 +13,16 @@ if backend_path not in sys.path:
     sys.path.append(backend_path)
 
 try:
-    # Use absolute import from the root
-    from backend.app import app
-    # Export for Vercel
-    handler = app
+    # Import as alias to avoid name conflict with the exported 'app'
+    from backend.app import app as fastapi_app
+    app = fastapi_app
 except Exception as e:
     print(f"Error importing FastAPI app: {e}")
     from fastapi import FastAPI
-    handler = FastAPI()
-    @handler.get("/api/health")
+    app = FastAPI()
+    @app.get("/api/health")
     def health():
         return {"status": "error", "message": str(e)}
+
+# Export as handler too just in case
+handler = app
