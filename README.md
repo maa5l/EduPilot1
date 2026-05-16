@@ -1,59 +1,53 @@
-# 🚀 EduPilot — مساعدك الأكاديمي الذكي فوق بلاك بورد
+# 🚀 EduPilot – Blackboard Prototype
 
-**EduPilot** هو نظام ذكاء اصطناعي متطور مصمم لمساعدة طلاب الجامعات في تحسين مسارهم الأكاديمي عبر تحليل سجلاتهم الدراسية وخططهم بذكاء، وتقديم نصائح استباقية لمنع التعثر الدراسي.
+## Languages & Technologies Used
 
----
+This project is built using:
 
-## 🌟 المميزات الأساسية
-
-1.  **لوحة تحكم ذكية (AI Dashboard):** عرض حالة الطالبة الأكاديمية، المعدل التراكمي، وجهد الدراسة للترم الحالي بناءً على وزن المواد وصعوبتها.
-2.  **الرادار الاستباقي (Proactive Radar):** محرك قرار يكتشف المواد "السنوية" والمتطلبات الأساسية ويحذر الطالبة في حال عدم تسجيلها لمنع تأخر التخرج لعام كامل.
-3.  **جسور المعرفة (Knowledge Bridges):** تحديد الفجوات المعرفية في المواد الحالية (بناءً على درجات المتطلبات السابقة) واقتراح مصادر تعليمية من يوتيوب لسد هذه الفجوات.
-4.  **المسار الأكاديمي (Career Path):** تحليل درجات الطالبة في المجموعات التخصصية (الذكاء الاصطناعي، الأمن السيبراني، هندسة البرمجيات) واقتراح المسار المهني الأنسب مع المواد الاختيارية.
-5.  **مساعد EduPilot الذكي (AI Chat):** بوت محادثة متكامل يفهم سجل الطالبة ويجيب على استفساراتها حول المعدل، الخطط الدراسية، والتنبيهات الحرجة.
+- **Frontend**: React (Vite), TypeScript, Tailwind CSS, Lucide Icons
+- **Backend**: Python 3.10+, FastAPI
+- **Core Modules**: PDF Extractor, Logic Rule Engine
+- **Database/Auth**: Supabase (Optional - supports demo mode without it)
 
 ---
 
-## 🛠 التقنيات المستخدمة
+## How to Run the Project Locally
 
-### الواجهة الخلفية (Backend)
-*   **Python 3.10+**: اللغة الأساسية للمشروع.
-*   **FastAPI**: إطار عمل سريع جداً لبناء الـ REST API.
-*   **PDF Extractor**: موديول مخصص لتحليل ملفات السجل الأكاديمي والخطة الدراسية (PDF).
-*   **Rule Engine**: محرك استنتاجي مبني على قواعد منطقية لتحويل البيانات الجامدة إلى نصائح حركية.
-*   **Supabase (Optional)**: للتعامل مع قاعدة البيانات والمصادقة (يدعم الوضع التجريبي بدونها).
+1. Clone or download the project repository.
 
-### الواجهة الأمامية (Frontend)
-*   **React (Vite)**: لبناء واجهة مستخدم سريعة وعصرية.
-*   **TypeScript**: لضمان جودة الكود وتقليل الأخطاء البرمجية.
-*   **TanStack Router & Query**: لإدارة المسارات وجلب البيانات بكفاءة.
-*   **Tailwind CSS & Vanilla CSS**: للتصميم الأنيق والمتجاوب (Responsive Design).
-*   **Lucide Icons**: أيقونات عصرية وبسيطة.
+2. Make sure these main folders are in the project root:
+   - `backend/` (Contains the Python FastAPI server and logic)
+   - `frontend/` (Contains the React web application interface)
 
----
+3. Follow these steps to run both parts:
 
-## 🚀 كيفية التشغيل
+### Part 1: Start the Backend Server
+Open your terminal and run:
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate || .\venv\Scripts\activate
+pip install -r requirements.txt
+uvicorn main:app --reload
+The backend API will be live at: http://127.0.0.1:8000
 
-المشروع مجهز بملفات تشغيل تلقائية لتسهيل العملية:
+Part 2: Start the Frontend Interface
+Open a new terminal window and run:
 
-1.  **تشغيل النظام بالكامل**: قم بفتح ملف `start.bat`. سيقوم تلقائياً بـ:
-    *   التأكد من وجود بايثون.
-    *   تثبيت المكتبات اللازمة.
-    *   تشغيل خادم FastAPI على المنفذ `8000`.
-2.  **الدخول للنظام**: افتح المتصفح على الرابط: `http://127.0.0.1:8000`
-3.  **بيانات الدخول (Demo)**:
-    *   **رسيل العمري**: الرقم الجامعي `445004397` (كلمة مرور: أي شيء).
-    *   **وسن الغامدي**: الرقم الجامعي `445004398` (كلمة مرور: أي شيء).
+Bash
+cd frontend
+npm install
+npm run dev
+Open the local URL provided in your terminal (usually http://localhost:5173) in your browser.
 
----
+Recommended Browsers
+For the best pixel-perfect dashboard experience, use:
 
-## 📂 هيكل المشروع
+Google Chrome
 
-*   `backend/`: يحتوي على منطق الذكاء الاصطناعي والـ API.
-*   `src/`: كود المصدر لواجهة الـ React.
-*   `dist/`: الملفات الجاهزة للإنتاج (Production Build) التي يخدمها الباك اند.
-*   `Data/`: المجلد الذي يوضع فيه ملفات الـ PDF المراد تحليلها.
-*   `start.bat`: ملف التشغيل الرئيسي.
+Microsoft Edge
 
----
-**تم التطوير ليكون مشروع تخرج متميز يجمع بين تقنيات تحليل البيانات وتجربة المستخدم الحديثة.**
+Safari
+
+Important Note
+The system is designed to process academic records dynamically. When testing, make sure to upload a valid transcript file (.pdf) so that the PDF Extractor and Rule Engine can analyze and generate your proactive academic path recommendations correctly.
